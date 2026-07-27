@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TENANT_ADMIN
+  MEMBER
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+  urls  Url[]
+
+  @@map("tenants")
+}
+
+model User {
+  id               String   @id @default(uuid())
+  tenantId         String
+  email            String   @unique
+  passwordHash     String
+  role             Role     @default(MEMBER)
+  refreshTokenHash String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdUrls Url[] @relation("UrlCreatedBy")
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+model Url {
+  id          String    @id @default(uuid())
+  tenantId    String
+  createdById String
+  shortCode   String    @unique
+  originalUrl String
+  title       String?
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User   @relation("UrlCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
+  @@index([tenantId, deletedAt])
+  @@map("urls")
+}
