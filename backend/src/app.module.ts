@@ -18,6 +18,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['backend/.env', '.env'],
       load: [configuration],
       validationSchema: envValidationSchema,
       validationOptions: {
